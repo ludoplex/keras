@@ -166,13 +166,10 @@ def MobileNet(
       A `keras.Model` instance.
     """
     global layers
-    if "layers" in kwargs:
-        layers = kwargs.pop("layers")
-    else:
-        layers = VersionAwareLayers()
+    layers = kwargs.pop("layers") if "layers" in kwargs else VersionAwareLayers()
     if kwargs:
         raise ValueError(f"Unknown argument(s): {(kwargs,)}")
-    if not (weights in {"imagenet", None} or tf.io.gfile.exists(weights)):
+    if weights not in {"imagenet", None} and not tf.io.gfile.exists(weights):
         raise ValueError(
             "The `weights` argument should be either "
             "`None` (random initialization), `imagenet` "
@@ -199,11 +196,7 @@ def MobileNet(
             rows = input_shape[0]
             cols = input_shape[1]
 
-        if rows == cols and rows in [128, 160, 192, 224]:
-            default_size = rows
-        else:
-            default_size = 224
-
+        default_size = rows if rows == cols and rows in [128, 160, 192, 224] else 224
     input_shape = imagenet_utils.obtain_input_shape(
         input_shape,
         default_size=default_size,
@@ -247,12 +240,11 @@ def MobileNet(
 
     if input_tensor is None:
         img_input = layers.Input(shape=input_shape)
-    else:
-        if not backend.is_keras_tensor(input_tensor):
-            img_input = layers.Input(tensor=input_tensor, shape=input_shape)
-        else:
-            img_input = input_tensor
+    elif backend.is_keras_tensor(input_tensor):
+        img_input = input_tensor
 
+    else:
+        img_input = layers.Input(tensor=input_tensor, shape=input_shape)
     x = _conv_block(img_input, 32, alpha, strides=(2, 2))
     x = _depthwise_conv_block(x, 64, alpha, depth_multiplier, block_id=1)
 
@@ -289,11 +281,10 @@ def MobileNet(
         x = layers.Activation(
             activation=classifier_activation, name="predictions"
         )(x)
-    else:
-        if pooling == "avg":
-            x = layers.GlobalAveragePooling2D()(x)
-        elif pooling == "max":
-            x = layers.GlobalMaxPooling2D()(x)
+    elif pooling == "avg":
+        x = layers.GlobalAveragePooling2D()(x)
+    elif pooling == "max":
+        x = layers.GlobalMaxPooling2D()(x)
 
     # Ensure that the model takes into account
     # any potential predecessors of `input_tensor`.
@@ -307,27 +298,23 @@ def MobileNet(
 
     # Load weights.
     if weights == "imagenet":
-        if alpha == 1.0:
-            alpha_text = "1_0"
+        if alpha == 0.50:
+            alpha_text = "5_0"
         elif alpha == 0.75:
             alpha_text = "7_5"
-        elif alpha == 0.50:
-            alpha_text = "5_0"
+        elif alpha == 1.0:
+            alpha_text = "1_0"
         else:
             alpha_text = "2_5"
 
         if include_top:
             model_name = "mobilenet_%s_%d_tf.h5" % (alpha_text, rows)
-            weight_path = BASE_WEIGHT_PATH + model_name
-            weights_path = data_utils.get_file(
-                model_name, weight_path, cache_subdir="models"
-            )
         else:
             model_name = "mobilenet_%s_%d_tf_no_top.h5" % (alpha_text, rows)
-            weight_path = BASE_WEIGHT_PATH + model_name
-            weights_path = data_utils.get_file(
-                model_name, weight_path, cache_subdir="models"
-            )
+        weight_path = BASE_WEIGHT_PATH + model_name
+        weights_path = data_utils.get_file(
+            model_name, weight_path, cache_subdir="models"
+        )
         model.load_weights(weights_path)
     elif weights is not None:
         model.load_weights(weights)

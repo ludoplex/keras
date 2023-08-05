@@ -199,11 +199,11 @@ class Loss:
         if (
             not self._allow_sum_over_batch_size
             and tf.distribute.has_strategy()
-            and (
-                self.reduction == losses_utils.ReductionV2.AUTO
-                or self.reduction
-                == losses_utils.ReductionV2.SUM_OVER_BATCH_SIZE
-            )
+            and self.reduction
+            in [
+                losses_utils.ReductionV2.AUTO,
+                losses_utils.ReductionV2.SUM_OVER_BATCH_SIZE,
+            ]
         ):
             raise ValueError(
                 "Please use `tf.keras.losses.Reduction.SUM` or "
@@ -270,12 +270,10 @@ class LossFunctionWrapper(Loss):
         return ag_fn(y_true, y_pred, **self._fn_kwargs)
 
     def get_config(self):
-        config = {}
-        for k, v in self._fn_kwargs.items():
-            config[k] = (
-                backend.eval(v) if tf_utils.is_tensor_or_variable(v) else v
-            )
-
+        config = {
+            k: (backend.eval(v) if tf_utils.is_tensor_or_variable(v) else v)
+            for k, v in self._fn_kwargs.items()
+        }
         if saving_lib.saving_v3_enabled():
             from keras.utils import get_registered_name
 
@@ -2853,7 +2851,7 @@ huber_loss = huber
 
 
 def is_categorical_crossentropy(loss):
-    result = (
+    return (
         isinstance(loss, CategoricalCrossentropy)
         or (
             isinstance(loss, LossFunctionWrapper)
@@ -2865,7 +2863,6 @@ def is_categorical_crossentropy(loss):
         )
         or (loss == "categorical_crossentropy")
     )
-    return result
 
 
 @keras_export("keras.losses.serialize")

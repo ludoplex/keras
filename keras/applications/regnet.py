@@ -392,9 +392,7 @@ def PreStem(name=None):
         name = "prestem" + str(backend.get_uid("prestem"))
 
     def apply(x):
-        x = layers.Rescaling(
-            scale=1.0 / 255.0, name=name + "_prestem_rescaling"
-        )(x)
+        x = layers.Rescaling(scale=1.0 / 255.0, name=f"{name}_prestem_rescaling")(x)
         return x
 
     return apply
@@ -421,12 +419,12 @@ def Stem(name=None):
             use_bias=False,
             padding="same",
             kernel_initializer="he_normal",
-            name=name + "_stem_conv",
+            name=f"{name}_stem_conv",
         )(x)
         x = layers.BatchNormalization(
-            momentum=0.9, epsilon=1e-5, name=name + "_stem_bn"
+            momentum=0.9, epsilon=1e-5, name=f"{name}_stem_bn"
         )(x)
-        x = layers.ReLU(name=name + "_stem_relu")(x)
+        x = layers.ReLU(name=f"{name}_stem_relu")(x)
         return x
 
     return apply
@@ -448,21 +446,21 @@ def SqueezeAndExciteBlock(filters_in, se_filters, name=None):
 
     def apply(inputs):
         x = layers.GlobalAveragePooling2D(
-            name=name + "_squeeze_and_excite_gap", keepdims=True
+            name=f"{name}_squeeze_and_excite_gap", keepdims=True
         )(inputs)
         x = layers.Conv2D(
             se_filters,
             (1, 1),
             activation="relu",
             kernel_initializer="he_normal",
-            name=name + "_squeeze_and_excite_squeeze",
+            name=f"{name}_squeeze_and_excite_squeeze",
         )(x)
         x = layers.Conv2D(
             filters_in,
             (1, 1),
             activation="sigmoid",
             kernel_initializer="he_normal",
-            name=name + "_squeeze_and_excite_excite",
+            name=f"{name}_squeeze_and_excite_excite",
         )(x)
         x = tf.math.multiply(x, inputs)
         return x
@@ -506,10 +504,10 @@ def XBlock(filters_in, filters_out, group_width, stride=1, name=None):
                 strides=stride,
                 use_bias=False,
                 kernel_initializer="he_normal",
-                name=name + "_skip_1x1",
+                name=f"{name}_skip_1x1",
             )(inputs)
             skip = layers.BatchNormalization(
-                momentum=0.9, epsilon=1e-5, name=name + "_skip_bn"
+                momentum=0.9, epsilon=1e-5, name=f"{name}_skip_bn"
             )(skip)
         else:
             skip = inputs
@@ -521,12 +519,12 @@ def XBlock(filters_in, filters_out, group_width, stride=1, name=None):
             (1, 1),
             use_bias=False,
             kernel_initializer="he_normal",
-            name=name + "_conv_1x1_1",
+            name=f"{name}_conv_1x1_1",
         )(inputs)
         x = layers.BatchNormalization(
-            momentum=0.9, epsilon=1e-5, name=name + "_conv_1x1_1_bn"
+            momentum=0.9, epsilon=1e-5, name=f"{name}_conv_1x1_1_bn"
         )(x)
-        x = layers.ReLU(name=name + "_conv_1x1_1_relu")(x)
+        x = layers.ReLU(name=f"{name}_conv_1x1_1_relu")(x)
 
         # conv_3x3
         x = layers.Conv2D(
@@ -537,12 +535,12 @@ def XBlock(filters_in, filters_out, group_width, stride=1, name=None):
             groups=groups,
             padding="same",
             kernel_initializer="he_normal",
-            name=name + "_conv_3x3",
+            name=f"{name}_conv_3x3",
         )(x)
         x = layers.BatchNormalization(
-            momentum=0.9, epsilon=1e-5, name=name + "_conv_3x3_bn"
+            momentum=0.9, epsilon=1e-5, name=f"{name}_conv_3x3_bn"
         )(x)
-        x = layers.ReLU(name=name + "_conv_3x3_relu")(x)
+        x = layers.ReLU(name=f"{name}_conv_3x3_relu")(x)
 
         # conv_1x1_2
         x = layers.Conv2D(
@@ -550,13 +548,13 @@ def XBlock(filters_in, filters_out, group_width, stride=1, name=None):
             (1, 1),
             use_bias=False,
             kernel_initializer="he_normal",
-            name=name + "_conv_1x1_2",
+            name=f"{name}_conv_1x1_2",
         )(x)
         x = layers.BatchNormalization(
-            momentum=0.9, epsilon=1e-5, name=name + "_conv_1x1_2_bn"
+            momentum=0.9, epsilon=1e-5, name=f"{name}_conv_1x1_2_bn"
         )(x)
 
-        x = layers.ReLU(name=name + "_exit_relu")(x + skip)
+        x = layers.ReLU(name=f"{name}_exit_relu")(x + skip)
 
         return x
 
@@ -607,10 +605,10 @@ def YBlock(
                 strides=stride,
                 use_bias=False,
                 kernel_initializer="he_normal",
-                name=name + "_skip_1x1",
+                name=f"{name}_skip_1x1",
             )(inputs)
             skip = layers.BatchNormalization(
-                momentum=0.9, epsilon=1e-5, name=name + "_skip_bn"
+                momentum=0.9, epsilon=1e-5, name=f"{name}_skip_bn"
             )(skip)
         else:
             skip = inputs
@@ -622,12 +620,12 @@ def YBlock(
             (1, 1),
             use_bias=False,
             kernel_initializer="he_normal",
-            name=name + "_conv_1x1_1",
+            name=f"{name}_conv_1x1_1",
         )(inputs)
         x = layers.BatchNormalization(
-            momentum=0.9, epsilon=1e-5, name=name + "_conv_1x1_1_bn"
+            momentum=0.9, epsilon=1e-5, name=f"{name}_conv_1x1_1_bn"
         )(x)
-        x = layers.ReLU(name=name + "_conv_1x1_1_relu")(x)
+        x = layers.ReLU(name=f"{name}_conv_1x1_1_relu")(x)
 
         # conv_3x3
         x = layers.Conv2D(
@@ -638,12 +636,12 @@ def YBlock(
             groups=groups,
             padding="same",
             kernel_initializer="he_normal",
-            name=name + "_conv_3x3",
+            name=f"{name}_conv_3x3",
         )(x)
         x = layers.BatchNormalization(
-            momentum=0.9, epsilon=1e-5, name=name + "_conv_3x3_bn"
+            momentum=0.9, epsilon=1e-5, name=f"{name}_conv_3x3_bn"
         )(x)
-        x = layers.ReLU(name=name + "_conv_3x3_relu")(x)
+        x = layers.ReLU(name=f"{name}_conv_3x3_relu")(x)
 
         # Squeeze-Excitation block
         x = SqueezeAndExciteBlock(filters_out, se_filters, name=name)(x)
@@ -654,13 +652,13 @@ def YBlock(
             (1, 1),
             use_bias=False,
             kernel_initializer="he_normal",
-            name=name + "_conv_1x1_2",
+            name=f"{name}_conv_1x1_2",
         )(x)
         x = layers.BatchNormalization(
-            momentum=0.9, epsilon=1e-5, name=name + "_conv_1x1_2_bn"
+            momentum=0.9, epsilon=1e-5, name=f"{name}_conv_1x1_2_bn"
         )(x)
 
-        x = layers.ReLU(name=name + "_exit_relu")(x + skip)
+        x = layers.ReLU(name=f"{name}_exit_relu")(x + skip)
 
         return x
 
@@ -713,10 +711,10 @@ def ZBlock(
             (1, 1),
             use_bias=False,
             kernel_initializer="he_normal",
-            name=name + "_conv_1x1_1",
+            name=f"{name}_conv_1x1_1",
         )(inputs)
         x = layers.BatchNormalization(
-            momentum=0.9, epsilon=1e-5, name=name + "_conv_1x1_1_bn"
+            momentum=0.9, epsilon=1e-5, name=f"{name}_conv_1x1_1_bn"
         )(x)
         x = tf.nn.silu(x)
 
@@ -729,10 +727,10 @@ def ZBlock(
             groups=groups,
             padding="same",
             kernel_initializer="he_normal",
-            name=name + "_conv_3x3",
+            name=f"{name}_conv_3x3",
         )(x)
         x = layers.BatchNormalization(
-            momentum=0.9, epsilon=1e-5, name=name + "_conv_3x3_bn"
+            momentum=0.9, epsilon=1e-5, name=f"{name}_conv_3x3_bn"
         )(x)
         x = tf.nn.silu(x)
 
@@ -745,16 +743,13 @@ def ZBlock(
             (1, 1),
             use_bias=False,
             kernel_initializer="he_normal",
-            name=name + "_conv_1x1_2",
+            name=f"{name}_conv_1x1_2",
         )(x)
         x = layers.BatchNormalization(
-            momentum=0.9, epsilon=1e-5, name=name + "_conv_1x1_2_bn"
+            momentum=0.9, epsilon=1e-5, name=f"{name}_conv_1x1_2_bn"
         )(x)
 
-        if stride != 1:
-            return x
-        else:
-            return x + inputs
+        return x if stride != 1 else x + inputs
 
     return apply
 
@@ -799,7 +794,7 @@ def Stage(block_type, depth, group_width, filters_in, filters_out, name=None):
                 filters_out,
                 group_width,
                 stride=2,
-                name=name + "_YBlock_0",
+                name=f"{name}_YBlock_0",
             )(x)
             for i in range(1, depth):
                 x = YBlock(
@@ -847,8 +842,8 @@ def Head(num_classes=1000, name=None):
         name = str(backend.get_uid("head"))
 
     def apply(x):
-        x = layers.GlobalAveragePooling2D(name=name + "_head_gap")(x)
-        x = layers.Dense(num_classes, name=name + "head_dense")(x)
+        x = layers.GlobalAveragePooling2D(name=f"{name}_head_gap")(x)
+        x = layers.Dense(num_classes, name=f"{name}head_dense")(x)
         return x
 
     return apply
@@ -918,7 +913,7 @@ def RegNet(
         ValueError: if `block_type` is not one of `{"X", "Y", "Z"}`
 
     """
-    if not (weights in {"imagenet", None} or tf.io.gfile.exists(weights)):
+    if weights not in {"imagenet", None} and not tf.io.gfile.exists(weights):
         raise ValueError(
             "The `weights` argument should be either "
             "`None` (random initialization), `imagenet` "
@@ -944,12 +939,11 @@ def RegNet(
 
     if input_tensor is None:
         img_input = layers.Input(shape=input_shape)
-    else:
-        if not backend.is_keras_tensor(input_tensor):
-            img_input = layers.Input(tensor=input_tensor, shape=input_shape)
-        else:
-            img_input = input_tensor
+    elif backend.is_keras_tensor(input_tensor):
+        img_input = input_tensor
 
+    else:
+        img_input = layers.Input(tensor=input_tensor, shape=input_shape)
     if input_tensor is not None:
         inputs = layer_utils.get_source_inputs(input_tensor)[0]
     else:
@@ -972,7 +966,7 @@ def RegNet(
             group_width,
             in_channels,
             out_channels,
-            name=model_name + "_Stage_" + str(num_stage),
+            name=f"{model_name}_Stage_{str(num_stage)}",
         )(x)
         in_channels = out_channels
 
@@ -980,11 +974,10 @@ def RegNet(
         x = Head(num_classes=classes)(x)
         imagenet_utils.validate_activation(classifier_activation, weights)
 
-    else:
-        if pooling == "avg":
-            x = layers.GlobalAveragePooling2D()(x)
-        elif pooling == "max":
-            x = layers.GlobalMaxPooling2D()(x)
+    elif pooling == "avg":
+        x = layers.GlobalAveragePooling2D()(x)
+    elif pooling == "max":
+        x = layers.GlobalMaxPooling2D()(x)
 
     model = training.Model(inputs=inputs, outputs=x, name=model_name)
 

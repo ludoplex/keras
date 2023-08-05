@@ -87,7 +87,7 @@ class MicroBenchmarksBase(tf.test.Benchmark):
         if name is None:
             raise ValueError("Unable to determine calling Benchmark function.")
         if tf.__internal__.is_tfrt_enabled():
-            name = name + "_tfrt"
+            name = f"{name}_tfrt"
         return name
 
     def _run(self, func, num_iters, execution_mode=None):

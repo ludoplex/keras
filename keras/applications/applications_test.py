@@ -164,10 +164,7 @@ class ApplicationsTest(tf.test.TestCase, parameterized.TestCase):
 
     @parameterized.parameters(*MODEL_LIST)
     def test_application_notop(self, app, last_dim):
-        if "NASNet" in app.__name__:
-            only_check_last_dim = True
-        else:
-            only_check_last_dim = False
+        only_check_last_dim = "NASNet" in app.__name__
         output_shape = _get_output_shape(
             lambda: app(weights=None, include_top=False)
         )

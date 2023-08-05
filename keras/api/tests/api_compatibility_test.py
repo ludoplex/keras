@@ -233,10 +233,7 @@ class ApiCompatibilityTest(tf.test.TestCase):
             verbose_diff_message = ""
             # First check if the key is not found in one or the other.
             if key in only_in_expected:
-                diff_message = (
-                    "Object %s expected but not found (removed). %s"
-                    % (key, additional_missing_object_message)
-                )
+                diff_message = f"Object {key} expected but not found (removed). {additional_missing_object_message}"
                 verbose_diff_message = diff_message
             elif key in only_in_actual:
                 diff_message = f"New object {key} found (added)."

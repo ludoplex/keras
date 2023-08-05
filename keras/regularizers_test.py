@@ -47,10 +47,10 @@ class KerasRegularizersTest(test_combinations.TestCase, parameterized.TestCase):
         )
         return model
 
-    def regularizer_fn_tensor(x):
+    def regularizer_fn_tensor(self):
         return tf.constant(0.0)
 
-    def regularizer_fn_scalar(x):
+    def regularizer_fn_scalar(self):
         return 0.0
 
     class RegularizerTensor(regularizers.Regularizer):
