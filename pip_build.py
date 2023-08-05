@@ -109,8 +109,7 @@ def convert_keras_imports(src_directory):
                 fpath = os.path.join(root, fname)
                 if VERBOSE:
                     print(f"...processing {fpath}")
-                with open(fpath) as f:
-                    contents = f.read()
+                contents = pathlib.Path(fpath).read_text()
                 lines = contents.split("\n")
                 in_string = False
                 new_lines = []
@@ -142,9 +141,7 @@ def generate_keras_api_files(package_directory, src_directory):
                 codebase_walk_entry_points.append(base_entry_point)
             elif fname.endswith(".py") and not fname.endswith("_test.py"):
                 module_name = fname[:-3]
-                codebase_walk_entry_points.append(
-                    base_entry_point + "." + module_name
-                )
+                codebase_walk_entry_points.append(f"{base_entry_point}.{module_name}")
 
     # Import all Python modules found in the code directory.
     modules = []
@@ -196,14 +193,14 @@ def generate_keras_api_files(package_directory, src_directory):
             skip = False
 
             def has_same_metadata(a, b):
-                if (
-                    hasattr(a, "_keras_api_names")
-                    and hasattr(b, "_keras_api_names")
-                    and a._keras_api_names == b._keras_api_names
-                    and a._keras_api_names_v1 == b._keras_api_names_v1
-                ):
-                    return True
-                return False
+                return bool(
+                    (
+                        hasattr(a, "_keras_api_names")
+                        and hasattr(b, "_keras_api_names")
+                        and a._keras_api_names == b._keras_api_names
+                        and a._keras_api_names_v1 == b._keras_api_names_v1
+                    )
+                )
 
             try:
                 classes = inspect.getmro(symbol)
@@ -260,10 +257,7 @@ def grab_symbol_metadata(all_symbols, is_v1=False):
     for symbol in all_symbols:
         if VERBOSE:
             print(f"...processing symbol '{symbol.__name__}'")
-        if is_v1:
-            api_names = symbol._keras_api_names_v1
-        else:
-            api_names = symbol._keras_api_names
+        api_names = symbol._keras_api_names_v1 if is_v1 else symbol._keras_api_names
         for export_path in api_names:
             export_modules = export_path.split(".")
             export_name = export_modules[-1]
@@ -386,18 +380,17 @@ def build_pip_package(
         version += f".dev{date.strftime('%Y%m%d%H')}"
     elif rc:
         version += rc
-    with open(os.path.join(package_directory, "__init__.py")) as f:
-        init_contents = f.read()
+    init_contents = pathlib.Path(
+        os.path.join(package_directory, "__init__.py")
+    ).read_text()
     with open(os.path.join(package_directory, "__init__.py"), "w") as f:
         f.write(init_contents + "\n\n" + f'__version__ = "{version}"\n')
 
     # Insert {{PACKAGE}} and {{VERSION}} strings in setup.py
-    if is_nightly:
-        package = PACKAGE_NAME + "-nightly"
-    else:
-        package = PACKAGE_NAME
-    with open(os.path.join(build_directory, "setup.py")) as f:
-        setup_contents = f.read()
+    package = f"{PACKAGE_NAME}-nightly" if is_nightly else PACKAGE_NAME
+    setup_contents = pathlib.Path(
+        os.path.join(build_directory, "setup.py")
+    ).read_text()
     with open(os.path.join(build_directory, "setup.py"), "w") as f:
         setup_contents = setup_contents.replace("{{VERSION}}", version)
         setup_contents = setup_contents.replace("{{PACKAGE}}", package)
@@ -442,7 +435,7 @@ def test_wheel(wheel_path, expected_version, requirements_path):
         # Check version is correct
         output = subprocess.check_output(script.encode(), shell=True)
         output = output.decode().rstrip().split("\n")[-1].strip()
-        if not output == expected_version:
+        if output != expected_version:
             raise ValueError(
                 "Incorrect version; expected "
                 f"{expected_version} but received {output}"

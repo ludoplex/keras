@@ -51,13 +51,13 @@ def compare_single_input_op_to_numpy(
     np_args=None,
     np_kwargs=None,
 ):
-    keras_args = keras_args or []
     keras_kwargs = keras_kwargs or {}
     np_args = np_args or []
     np_kwargs = np_kwargs or {}
     inputs = 2.0 * np.random.random(input_shape)
     if negative_values:
         inputs -= 1.0
+    keras_args = keras_args or []
     keras_output = keras_op(
         backend.variable(inputs, dtype=dtype), *keras_args, **keras_kwargs
     )
@@ -67,12 +67,7 @@ def compare_single_input_op_to_numpy(
         np.testing.assert_allclose(keras_output, np_output, atol=1e-4)
     except AssertionError:
         raise AssertionError(
-            "Test for op `"
-            + str(keras_op.__name__)
-            + "` failed; Expected "
-            + str(np_output)
-            + " but got "
-            + str(keras_output)
+            f"Test for op `{str(keras_op.__name__)}` failed; Expected {str(np_output)} but got {str(keras_output)}"
         )
 
 
@@ -87,12 +82,12 @@ def compare_two_inputs_op_to_numpy(
     np_args=None,
     np_kwargs=None,
 ):
-    keras_args = keras_args or []
     keras_kwargs = keras_kwargs or {}
     np_args = np_args or []
     np_kwargs = np_kwargs or {}
     input_a = np.random.random(input_shape_a)
     input_b = np.random.random(input_shape_b)
+    keras_args = keras_args or []
     keras_output = keras_op(
         backend.variable(input_a, dtype=dtype),
         backend.variable(input_b, dtype=dtype),
@@ -107,12 +102,7 @@ def compare_two_inputs_op_to_numpy(
         np.testing.assert_allclose(keras_output, np_output, atol=1e-4)
     except AssertionError:
         raise AssertionError(
-            "Test for op `"
-            + str(keras_op.__name__)
-            + "` failed; Expected "
-            + str(np_output)
-            + " but got "
-            + str(keras_output)
+            f"Test for op `{str(keras_op.__name__)}` failed; Expected {str(np_output)} but got {str(keras_output)}"
         )
 
 
@@ -431,18 +421,13 @@ class BackendLinearAlgebraTest(tf.test.TestCase, parameterized.TestCase):
         elif isinstance(axes, tuple):
             axes = list(axes)
         if axes is None:
-            if y.ndim == 2:
-                axes = [x.ndim - 1, y.ndim - 1]
-            else:
-                axes = [x.ndim - 1, y.ndim - 2]
+            axes = [x.ndim - 1, y.ndim - 1] if y.ndim == 2 else [x.ndim - 1, y.ndim - 2]
         if axes[0] < 0:
             axes[0] += x.ndim
         if axes[1] < 0:
             axes[1] += y.ndim
-        result = []
         axes = [axes[0] - 1, axes[1] - 1]
-        for xi, yi in zip(x, y):
-            result.append(np.tensordot(xi, yi, axes))
+        result = [np.tensordot(xi, yi, axes) for xi, yi in zip(x, y)]
         result = np.array(result)
         if result.ndim == 1:
             result = np.expand_dims(result, -1)
@@ -1053,10 +1038,8 @@ class BackendNNOpsTest(tf.test.TestCase, parameterized.TestCase):
                     strides = (stride,) * dim
 
                     output_shape = tuple(
-                        [
-                            (i - kernel_size + stride) // stride
-                            for i in input_spatial_shape
-                        ]
+                        (i - kernel_size + stride) // stride
+                        for i in input_spatial_shape
                     )
 
                     kernel_shape = (

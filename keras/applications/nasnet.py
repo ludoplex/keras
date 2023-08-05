@@ -37,6 +37,7 @@ Reference:
       https://arxiv.org/abs/1707.07012) (CVPR 2018)
 """
 
+
 import tensorflow.compat.v2 as tf
 
 from keras import backend
@@ -53,10 +54,12 @@ from tensorflow.python.util.tf_export import keras_export
 BASE_WEIGHTS_PATH = (
     "https://storage.googleapis.com/tensorflow/keras-applications/nasnet/"
 )
-NASNET_MOBILE_WEIGHT_PATH = BASE_WEIGHTS_PATH + "NASNet-mobile.h5"
-NASNET_MOBILE_WEIGHT_PATH_NO_TOP = BASE_WEIGHTS_PATH + "NASNet-mobile-no-top.h5"
-NASNET_LARGE_WEIGHT_PATH = BASE_WEIGHTS_PATH + "NASNet-large.h5"
-NASNET_LARGE_WEIGHT_PATH_NO_TOP = BASE_WEIGHTS_PATH + "NASNet-large-no-top.h5"
+NASNET_MOBILE_WEIGHT_PATH = f"{BASE_WEIGHTS_PATH}NASNet-mobile.h5"
+NASNET_MOBILE_WEIGHT_PATH_NO_TOP = (
+    f"{BASE_WEIGHTS_PATH}NASNet-mobile-no-top.h5"
+)
+NASNET_LARGE_WEIGHT_PATH = f"{BASE_WEIGHTS_PATH}NASNet-large.h5"
+NASNET_LARGE_WEIGHT_PATH_NO_TOP = f"{BASE_WEIGHTS_PATH}NASNet-large-no-top.h5"
 
 layers = VersionAwareLayers()
 
@@ -152,7 +155,7 @@ def NASNet(
     Returns:
       A `keras.Model` instance.
     """
-    if not (weights in {"imagenet", None} or tf.io.gfile.exists(weights)):
+    if weights not in {"imagenet", None} and not tf.io.gfile.exists(weights):
         raise ValueError(
             "The `weights` argument should be either "
             "`None` (random initialization), `imagenet` "
@@ -210,12 +213,11 @@ def NASNet(
 
     if input_tensor is None:
         img_input = layers.Input(shape=input_shape)
-    else:
-        if not backend.is_keras_tensor(input_tensor):
-            img_input = layers.Input(tensor=input_tensor, shape=input_shape)
-        else:
-            img_input = input_tensor
+    elif backend.is_keras_tensor(input_tensor):
+        img_input = input_tensor
 
+    else:
+        img_input = layers.Input(tensor=input_tensor, shape=input_shape)
     if penultimate_filters % (24 * (filter_multiplier**2)) != 0:
         raise ValueError(
             "For NASNet-A models, the `penultimate_filters` must be a multiple "
@@ -290,11 +292,10 @@ def NASNet(
         x = layers.Dense(
             classes, activation=classifier_activation, name="predictions"
         )(x)
-    else:
-        if pooling == "avg":
-            x = layers.GlobalAveragePooling2D()(x)
-        elif pooling == "max":
-            x = layers.GlobalMaxPooling2D()(x)
+    elif pooling == "avg":
+        x = layers.GlobalAveragePooling2D()(x)
+    elif pooling == "max":
+        x = layers.GlobalMaxPooling2D()(x)
 
     # Ensure that the model takes into account
     # any potential predecessors of `input_tensor`.

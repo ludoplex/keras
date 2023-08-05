@@ -44,10 +44,7 @@ def _collective_communication(all_reduce_alg):
     }
     if all_reduce_alg not in collective_communication_options:
         raise ValueError(
-            "When used with `multi_worker_mirrored`, valid values for "
-            "all_reduce_alg are [`ring`, `nccl`].  Supplied value: {}".format(
-                all_reduce_alg
-            )
+            f"When used with `multi_worker_mirrored`, valid values for all_reduce_alg are [`ring`, `nccl`].  Supplied value: {all_reduce_alg}"
         )
     return collective_communication_options[all_reduce_alg]
 
@@ -75,10 +72,7 @@ def _mirrored_cross_device_ops(all_reduce_alg, num_packs):
     }
     if all_reduce_alg not in mirrored_all_reduce_options:
         raise ValueError(
-            "When used with `mirrored`, valid values for all_reduce_alg are "
-            "[`nccl`, `hierarchical_copy`].  Supplied value: {}".format(
-                all_reduce_alg
-            )
+            f"When used with `mirrored`, valid values for all_reduce_alg are [`nccl`, `hierarchical_copy`].  Supplied value: {all_reduce_alg}"
         )
     cross_device_ops_class = mirrored_all_reduce_options[all_reduce_alg]
     return cross_device_ops_class(num_packs=num_packs)
@@ -113,8 +107,7 @@ def get_distribution_strategy(
     if distribution_strategy == "off":
         if num_gpus > 1:
             raise ValueError(
-                "When {} GPUs are specified, distribution_strategy "
-                "flag cannot be set to `off`.".format(num_gpus)
+                f"When {num_gpus} GPUs are specified, distribution_strategy flag cannot be set to `off`."
             )
         return None
 
@@ -158,8 +151,7 @@ def configure_cluster(worker_hosts=None, task_index=-1):
     Returns:
       Number of workers in the cluster.
     """
-    tf_config = json.loads(os.environ.get("TF_CONFIG", "{}"))
-    if tf_config:
+    if tf_config := json.loads(os.environ.get("TF_CONFIG", "{}")):
         num_workers = len(tf_config["cluster"].get("chief", [])) + len(
             tf_config["cluster"].get("worker", [])
         )
@@ -183,12 +175,7 @@ def configure_cluster(worker_hosts=None, task_index=-1):
 
 
 def get_strategy_scope(strategy):
-    if strategy:
-        strategy_scope = strategy.scope()
-    else:
-        strategy_scope = DummyContextManager()
-
-    return strategy_scope
+    return strategy.scope() if strategy else DummyContextManager()
 
 
 class DummyContextManager:
